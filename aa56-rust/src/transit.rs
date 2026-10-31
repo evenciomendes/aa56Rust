@@ -264,11 +264,6 @@ where
         (ok, r_tr, r_ri, r_se, alt_app_deg, alt_true_deg, elev_thresh)
     };
 
-    let mut eval_true_elev = |t_ut: f64| -> f64 {
-        let (_, _, _, _, _, alt_true, _) = eval_at_ut(t_ut);
-        alt_true
-    };
-
     // 1. Itera o horário de Trânsito Meridiano (`iter_trnsit` linhas 192-209)
     let mut t1 = jd_ut_start;
     let mut r_rise_init = -10.0;
@@ -300,7 +295,8 @@ where
 
     if !f_trnsit {
         if elev_true_trnsit > elev_thresh {
-            let (opt_r, opt_s) = no_rise_set(t_trnsit, elev_true_trnsit, elev_thresh, &mut eval_true_elev);
+            let mut eval_elev = |t: f64| -> f64 { eval_at_ut(t).5 };
+            let (opt_r, opt_s) = no_rise_set(t_trnsit, elev_true_trnsit, elev_thresh, &mut eval_elev);
             if opt_r.is_some() || opt_s.is_some() {
                 let has_r = opt_r.is_some();
                 let has_s = opt_s.is_some();
@@ -399,7 +395,8 @@ where
     }
 
     if !has_rise || !has_set {
-        let (opt_r, opt_s) = no_rise_set(t_trnsit, elev_true_trnsit, elev_thresh, &mut eval_true_elev);
+        let mut eval_elev = |t: f64| -> f64 { eval_at_ut(t).5 };
+        let (opt_r, opt_s) = no_rise_set(t_trnsit, elev_true_trnsit, elev_thresh, &mut eval_elev);
         if let Some(r_val) = opt_r {
             has_rise = true;
             t_r = r_val;
