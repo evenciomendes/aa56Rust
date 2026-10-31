@@ -6,6 +6,8 @@ use crate::earth_orientation::{refrac, sidrlt};
 use crate::math_time::{deltat, jtocal_parts, modtp, DTR, J2000, RTD};
 use std::f64::consts::PI;
 
+use serde::Serialize;
+
 const DISFAC: f64 = 2.3454780e4; // Raios terrestres por AU (trnsit.c)
 const COSSUN: f64 = -0.014543897651582657; // cos(90° 50') para o Sol
 const COSZEN: f64 = -9.8900378587411476e-3; // cos(90° 34') para estrelas e planetas
@@ -30,7 +32,7 @@ impl IntoRaDecDist for (f64, f64, f64, f64) {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct RiseTransitSet {
     pub has_transit: bool,
     pub has_rise: bool,
@@ -47,6 +49,8 @@ pub struct RiseTransitSet {
     pub transit_elevation_deg: f64,
     pub visible_hours: f64,
 }
+
+pub type RiseSetTransit = RiseTransitSet;
 
 /// Formata a fração de dia UT de um Dia Juliano `jd` (onde `.5` é 00:00 UT) como `HH:MM:SS UT`.
 pub fn jd_to_hms_ut(jd: f64) -> String {
