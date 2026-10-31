@@ -580,7 +580,7 @@ pub fn reduce_sun(
         r = pol_ret[2];
     }
 
-    let mut s_vec = [-ecr[0], -ecr[1], -ecr[2]];
+    let s_vec = [-ecr[0], -ecr[1], -ecr[2]];
     let s_norm = (s_vec[0] * s_vec[0] + s_vec[1] * s_vec[1] + s_vec[2] * s_vec[2]).sqrt();
     let mut p_astro = [s_vec[0] / s_norm, s_vec[1] / s_norm, s_vec[2] / s_norm];
     let astro_ra = zatan2(p_astro[0], p_astro[1]);

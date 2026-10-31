@@ -397,13 +397,11 @@ pub fn kepler(jed: f64, e: &mut OrbitElement) -> ([f64; 3], [f64; 3]) {
     e.plat = polar[1];
 
     // Convert ecliptic polar (at `e.equinox`) to equatorial rectangular (at `e.equinox`)
-    let eps_eq = if (e.equinox - J2000).abs() < 1.0e-4 {
+    let (_eps_eq, coseps, sineps) = if (e.equinox - J2000).abs() < 1.0e-4 {
         epsiln(J2000)
     } else {
         epsiln(e.equinox)
     };
-    let coseps = eps_eq.cos();
-    let sineps = eps_eq.sin();
 
     let x_ec = e.r * cbeta * l_orb.cos();
     let y_ec = e.r * cbeta * l_orb.sin();

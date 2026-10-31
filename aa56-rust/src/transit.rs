@@ -132,9 +132,9 @@ pub fn trnsit_step(
 }
 
 /// Busca por bissecção de intervalo (`search_halve` em `trnsit.c` linhas 461-495).
-fn search_halve<F>(t1_in: f64, _y1_in: f64, t2_in: f64, y2_in: f64, elev_thresh: f64, eval_elev: &F) -> f64
+fn search_halve<F>(t1_in: f64, _y1_in: f64, t2_in: f64, y2_in: f64, elev_thresh: f64, eval_elev: &mut F) -> f64
 where
-    F: Fn(f64) -> f64,
+    F: FnMut(f64) -> f64,
 {
     let mut t1 = t1_in;
     let mut t2 = t2_in;
@@ -160,10 +160,10 @@ fn no_rise_set<F>(
     t_trnsit0: f64,
     el_trnsit0: f64,
     elev_thresh: f64,
-    eval_elev: &F,
+    eval_elev: &mut F,
 ) -> (Option<f64>, Option<f64>)
 where
-    F: Fn(f64) -> f64,
+    F: FnMut(f64) -> f64,
 {
     let mut t_rise_out = None;
     let mut t_set_out = None;
@@ -225,14 +225,14 @@ pub fn compute_rise_transit_set<F, R>(
     obj_kind: i32,
     temp_c: f64,
     pressure_mb: f64,
-    eval_radec_dist: F,
+    mut eval_radec_dist: F,
 ) -> RiseTransitSet
 where
-    F: Fn(f64) -> R,
+    F: FnMut(f64) -> R,
     R: IntoRaDecDist,
 {
     let tpi = 2.0 * PI;
-    let eval_at_ut = |t_ut: f64| -> (bool, f64, f64, f64, f64, f64, f64) {
+    let mut eval_at_ut = |t_ut: f64| -> (bool, f64, f64, f64, f64, f64, f64) {
         let y_ep = 2000.0 + (t_ut - J2000) / 365.25;
         let dt_sec = deltat(y_ep);
         let tdt = t_ut + dt_sec / 86400.0;
@@ -264,7 +264,7 @@ where
         (ok, r_tr, r_ri, r_se, alt_app_deg, alt_true_deg, elev_thresh)
     };
 
-    let eval_true_elev = |t_ut: f64| -> f64 {
+    let mut eval_true_elev = |t_ut: f64| -> f64 {
         let (_, _, _, _, _, alt_true, _) = eval_at_ut(t_ut);
         alt_true
     };
@@ -300,7 +300,7 @@ where
 
     if !f_trnsit {
         if elev_true_trnsit > elev_thresh {
-            let (opt_r, opt_s) = no_rise_set(t_trnsit, elev_true_trnsit, elev_thresh, &eval_true_elev);
+            let (opt_r, opt_s) = no_rise_set(t_trnsit, elev_true_trnsit, elev_thresh, &mut eval_true_elev);
             if opt_r.is_some() || opt_s.is_some() {
                 let has_r = opt_r.is_some();
                 let has_s = opt_s.is_some();
@@ -399,7 +399,7 @@ where
     }
 
     if !has_rise || !has_set {
-        let (opt_r, opt_s) = no_rise_set(t_trnsit, elev_true_trnsit, elev_thresh, &eval_true_elev);
+        let (opt_r, opt_s) = no_rise_set(t_trnsit, elev_true_trnsit, elev_thresh, &mut eval_true_elev);
         if let Some(r_val) = opt_r {
             has_rise = true;
             t_r = r_val;
