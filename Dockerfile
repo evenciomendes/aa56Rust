@@ -20,6 +20,7 @@ WORKDIR /app
 # Copia os catálogos astronômicos e o binário nativo Linux compilado no Estágio 1
 COPY --from=rust-builder /app/aa56-rust/catalogs ./aa56-rust/catalogs
 COPY --from=rust-builder /app/aa56-rust/target/release/aa56-cli ./aa56-rust/target/release/aa56-cli
+RUN chmod +x ./aa56-rust/target/release/aa56-cli
 
 # Copia o servidor e as páginas web da aplicação Node.js
 COPY node-test-app ./node-test-app

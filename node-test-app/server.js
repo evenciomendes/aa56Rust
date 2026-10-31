@@ -16,6 +16,8 @@ function getRustBinaryPath() {
     path.join(__dirname, '..', 'aa56-rust', 'target', 'release', 'aa56-cli'),
     path.join(__dirname, '..', 'aa56-rust', 'target', 'debug', 'aa56-cli.exe'),
     path.join(__dirname, '..', 'aa56-rust', 'target', 'debug', 'aa56-cli'),
+    path.join(process.cwd(), 'aa56-rust', 'target', 'release', 'aa56-cli'),
+    '/app/aa56-rust/target/release/aa56-cli',
   ];
   for (const bin of candidates) {
     if (fs.existsSync(bin)) return bin;
@@ -57,7 +59,17 @@ function callEngine(params, modeOverride) {
     execFile(binPath, args, { timeout: 15000, maxBuffer: 15 * 1024 * 1024 }, (err, stdout, stderr) => {
       const elapsedMs = Number(process.hrtime.bigint() - t0) / 1e6;
       if (err) {
-        return reject(new Error(`Erro ao executar aa56-cli: ${err.message} ${stderr || ''}`));
+        console.error(`[EXEC ERROR] aa56-cli failed:`, err, stderr);
+        // Em caso de falha de execução no binário (ex: permissão ou erro inesperado), usa fallback seguro
+        try {
+          const fallbackData = computeEphemerisFallback(params);
+          fallbackData.engine_mode = 'Espelho JS de Homologação (Fallback de Recuperação Automática)';
+          fallbackData.node_roundtrip_ms = Number(elapsedMs.toFixed(3));
+          fallbackData.rust_exec_error = `${err.message}: ${stderr || ''}`;
+          return resolve(fallbackData);
+        } catch (fbErr) {
+          return reject(new Error(`Erro ao executar aa56-cli (${err.message}) e fallback (${fbErr.message})`));
+        }
       }
       try {
         const sanitized = stdout.replace(/(\d)"",/g, '$1\\"",');
