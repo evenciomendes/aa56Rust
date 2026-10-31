@@ -62,9 +62,7 @@ pub struct DomoonResult {
 /// (`moonll` in `domoon.c`).
 /// Returns `(rect_apparent_of_date, pol_apparent_of_date, angles_ep, angles_pq, angles_ dlon_rad)`.
 pub fn moonll(jed: f64, rearth_j2000: &[f64; 3]) -> ([f64; 3], [f64; 3], f64, f64, f64) {
-    let eps = epsiln(jed);
-    let coseps = eps.cos();
-    let sineps = eps.sin();
+    let (_eps, coseps, sineps) = epsiln(jed);
 
     // Compute geocentric Moon coordinates (equatorial rect of date, ecliptic polar of date)
     let (_rect0, mut pol) = gmoon(jed);

@@ -708,11 +708,11 @@ fn make_ecliptic_point_body(
     temp_c: f64,
     pressure_mb: f64,
 ) -> BodyEphemeris {
-    let eps = epsiln(jd_tdt);
+    let (_eps, coseps, sineps) = epsiln(jd_tdt);
     let mut p = [
         lon_rad_of_date.cos(),
-        lon_rad_of_date.sin() * eps.cos(),
-        lon_rad_of_date.sin() * eps.sin(),
+        lon_rad_of_date.sin() * coseps,
+        lon_rad_of_date.sin() * sineps,
     ];
 
     let mut p_j2000 = p;
@@ -812,9 +812,11 @@ pub fn compute_ephemeris_report(input: &EphemerisInput) -> EphemerisReport {
     let mut earth_el = planets[2].clone();
     let (earth_helio_j2000, earth_polar_j2000) = kepler(jd_tdt, &mut earth_el);
 
-    let gst_rad = sidrlt(jd_ut, jd_tdt);
-    let lst_rad = modtp(gst_rad + input.obs_lon_deg * DTR);
-    let eps = epsiln(jd_tdt);
+    let gst_sec = sidrlt(jd_ut, jd_tdt, 0.0);
+    let gst_rad = gst_sec * (DTR / 240.0);
+    let lst_sec = sidrlt(jd_ut, jd_tdt, input.obs_lon_deg);
+    let lst_rad = lst_sec * (DTR / 240.0);
+    let (eps, _, _) = epsiln(jd_tdt);
     let (nutl, nuto) = nutlo(jd_tdt);
 
     let mut bodies = Vec::new();

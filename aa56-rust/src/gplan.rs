@@ -629,9 +629,7 @@ pub fn gmoon(jed: f64) -> ([f64; 3], [f64; 3]) {
     let pol = [lon, lat, r];
 
     // Convert ecliptic polar of date to equatorial rectangular of date (`epsiln(J)`)
-    let eps = epsiln(jed);
-    let coseps = eps.cos();
-    let sineps = eps.sin();
+    let (_eps, coseps, sineps) = epsiln(jed);
 
     let cosB = lat.cos();
     let sinB = lat.sin();
