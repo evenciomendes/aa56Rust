@@ -289,7 +289,7 @@ pub fn lightt(
     let mut p0 = [0.0f64; 3];
     let mut ptemp = [0.0f64; 3];
     let mut q = [0.0f64; 3];
-    let t_light;
+    let mut t_light = 0.0f64;
 
     // Save initial geometric position at `jed`
     let (q0, _) = kepler(jed, elem);

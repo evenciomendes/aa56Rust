@@ -14,6 +14,22 @@ pub const HORIZON_SUN: i32 = 0;
 pub const HORIZON_PLANET_STAR: i32 = 1;
 pub const HORIZON_MOON: i32 = 3;
 
+pub trait IntoRaDecDist {
+    fn into_ra_dec_dist(self) -> (f64, f64, f64);
+}
+
+impl IntoRaDecDist for (f64, f64, f64) {
+    fn into_ra_dec_dist(self) -> (f64, f64, f64) {
+        self
+    }
+}
+
+impl IntoRaDecDist for (f64, f64, f64, f64) {
+    fn into_ra_dec_dist(self) -> (f64, f64, f64) {
+        (self.0, self.1, 1.0)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct RiseTransitSet {
     pub has_transit: bool,
@@ -196,27 +212,31 @@ where
 }
 
 /// Solução iterativa completa de Nascer, Trânsito e Pôr (`iter_trnsit` de `trnsit.c`).
-/// Aceita um closure `eval_radec_dist(jd_tdt) -> (ra_rad, dec_rad, dist_au)`.
-pub fn compute_rise_transit_set<F>(
+/// Aceita parâmetros completos de observação e closure `eval_radec_dist(jd_tdt) -> (ra_rad, dec_rad, ...)`
+pub fn compute_rise_transit_set<F, R>(
     jd_ut_start: f64,
     obs_lon_deg: f64,
     obs_lat_deg: f64,
+    _geo_obs: &(f64, f64),
     obj_kind: i32,
+    temp_c: f64,
+    pressure_mb: f64,
     eval_radec_dist: F,
 ) -> RiseTransitSet
 where
-    F: Fn(f64) -> (f64, f64, f64),
+    F: Fn(f64) -> R,
+    R: IntoRaDecDist,
 {
     let tpi = 2.0 * PI;
     let eval_at_ut = |t_ut: f64| -> (bool, f64, f64, f64, f64, f64, f64) {
         let y_ep = 2000.0 + (t_ut - J2000) / 365.25;
         let dt_sec = deltat(y_ep);
         let tdt = t_ut + dt_sec / 86400.0;
-        let (ra, dec, dist) = eval_radec_dist(tdt);
+        let (ra, dec, dist) = eval_radec_dist(tdt).into_ra_dec_dist();
 
         let step_d = 0.001; // igual a domoon.c (TDT - 0.001)
-        let (ra_p, dec_p, _) = eval_radec_dist(tdt + step_d);
-        let (ra_m, dec_m, _) = eval_radec_dist(tdt - step_d);
+        let (ra_p, dec_p, _) = eval_radec_dist(tdt + step_d).into_ra_dec_dist();
+        let (ra_m, dec_m, _) = eval_radec_dist(tdt - step_d).into_ra_dec_dist();
         let mut dra = ra_p - ra_m;
         if dra > PI {
             dra -= tpi;
@@ -233,7 +253,7 @@ where
         let glat_rad = DTR * obs_lat_deg;
         let sin_alt = glat_rad.sin() * dec.sin() + glat_rad.cos() * dec.cos() * lha.cos();
         let alt_true_deg = RTD * sin_alt.clamp(-1.0, 1.0).asin();
-        let alt_app_deg = alt_true_deg + refrac(alt_true_deg, 1013.0, 20.0);
+        let alt_app_deg = alt_true_deg + refrac(alt_true_deg, pressure_mb, temp_c);
 
         let (ok, r_tr, r_ri, r_se, elev_thresh) =
             trnsit_step(t_ut, lha, dec, dist, dradt, ddecdt, obs_lat_deg, obj_kind);

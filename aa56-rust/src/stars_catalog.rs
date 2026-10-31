@@ -297,7 +297,7 @@ pub fn parse_star_catalog(content: &str) -> Vec<StarCatalogRecord> {
         } else if (epoch_raw - 1950.0).abs() < 1e-3 {
             B1950
         } else if epoch_raw < 10000.0 {
-            caltoj(epoch_raw as i32, 1, 1.5)
+            caltoj(epoch_raw as i64, 1, 1.5)
         } else {
             epoch_raw
         };
@@ -522,13 +522,13 @@ pub fn parse_orbit_catalog(content: &str) -> Vec<OrbitElement> {
         } else if (eq_raw - 1950.0).abs() < 1e-3 {
             B1950
         } else if eq_raw < 10000.0 {
-            caltoj(eq_raw as i32, 1, 1.5)
+            caltoj(eq_raw as i64, 1, 1.5)
         } else {
             eq_raw
         };
 
         let epoch = if epoch_raw < 10000.0 {
-            caltoj(epoch_raw as i32, 1, 1.5)
+            caltoj(epoch_raw as i64, 1, 1.5)
         } else {
             epoch_raw
         };
