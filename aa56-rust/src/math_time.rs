@@ -131,7 +131,8 @@ pub fn deltap(p0: &[f64; 3], p1: &[f64; 3]) -> (f64, f64) {
 }
 
 /// Converte data calendário Gregoriano/Juliano para Dia Juliano (`caltoj` em `dms.c`).
-pub fn caltoj(year: i64, month: i32, day: f64) -> f64 {
+pub fn caltoj(year: impl Into<i64>, month: i32, day: f64) -> f64 {
+    let year = year.into();
     let mut y = year + 4800;
     if year < 0 {
         y += 1;

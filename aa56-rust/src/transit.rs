@@ -10,6 +10,10 @@ const DISFAC: f64 = 2.3454780e4; // Raios terrestres por AU (trnsit.c)
 const COSSUN: f64 = -0.014543897651582657; // cos(90° 50') para o Sol
 const COSZEN: f64 = -9.8900378587411476e-3; // cos(90° 34') para estrelas e planetas
 
+pub const HORIZON_SUN: i32 = 0;
+pub const HORIZON_PLANET_STAR: i32 = 1;
+pub const HORIZON_MOON: i32 = 3;
+
 #[derive(Debug, Clone)]
 pub struct RiseTransitSet {
     pub has_transit: bool,

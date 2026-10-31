@@ -358,7 +358,7 @@ pub fn precess(r: &mut [f64; 3], jd: f64, direction: i32) {
 
 /// Converte vetor retangular equatorial `pp` em coordenadas polares eclípticas `(lon, lat, r)` (`lonlat.c`).
 /// Se `ofdate` for `true` (`1` em C), precessiona `pp` de J2000 para `jd`; caso contrário, assume que `pp` já está em `jd` e usa `epsiln(jd)`.
-pub fn lonlat(pp: &[f64; 3], jd: f64, ofdate: bool) -> (f64, f64, f64) {
+pub fn lonlat_full(pp: &[f64; 3], jd: f64, ofdate: bool) -> (f64, f64, f64) {
     let mut s = *pp;
     let r = (s[0] * s[0] + s[1] * s[1] + s[2] * s[2]).sqrt();
     if ofdate {
@@ -379,6 +379,11 @@ pub fn lonlat(pp: &[f64; 3], jd: f64, ofdate: bool) -> (f64, f64, f64) {
         0.0
     };
     (lon, lat, r)
+}
+
+/// Versão padrão de `lonlat(pp, jd)` assumindo que `pp` já é de data (`ofdate = false`).
+pub fn lonlat(pp: &[f64; 3], jd: f64) -> (f64, f64, f64) {
+    lonlat_full(pp, jd, false)
 }
 
 /// Tempo Sideral Aparente Local em segundos (`sidrlt.c` do `aa-56` - fórmula Williams 1994 / DE403).
@@ -463,21 +468,37 @@ pub fn geodetic_to_geocentric(glat_deg: f64, height_m: f64) -> (f64, f64) {
     (tlat, trho)
 }
 
-/// Calcula Altitude e Azimute Topocêntricos (`altaz.c`, `diurab.c`, `diurpx.c`).
+/// Resultado detalhado da redução topocêntrica (`altaz.c`, `diurab.c`, `diurpx.c`).
+#[derive(Debug, Clone, Copy, Default)]
+pub struct TopoAltAzResult {
+    pub topo_ra_rad: f64,
+    pub topo_dec_rad: f64,
+    pub true_alt_deg: f64,
+    pub true_az_deg: f64,
+    pub refracted_alt_deg: f64,
+    pub lha_hours: f64,
+}
+
+/// Calcula Altitude e Azimute Topocêntricos completando `altaz.c`, `diurab.c`, `diurpx.c`.
+/// Aceita observador geocêntrico `geo_obs: &(tlat_deg, trho)`, paralaxe horizontal `hp_rad`,
+/// e parâmetros atmosféricos locais (`temp_c`, `pressure_mb`).
 pub fn topocentric_altaz(
     ra_rad: f64,
     dec_rad: f64,
-    dist_au: f64,
     jd_ut: f64,
     tdt: f64,
     obs_lon_deg: f64,
     obs_lat_deg: f64,
-) -> (f64, f64, f64) {
+    geo_obs: &(f64, f64),
+    hp_rad: f64,
+    temp_c: f64,
+    pressure_mb: f64,
+) -> TopoAltAzResult {
     let last_sec = sidrlt(jd_ut, tdt, obs_lon_deg);
     let last = last_sec * DTR / 240.0;
 
-    let (tlat_deg, trho) = geodetic_to_geocentric(obs_lat_deg, 0.0);
-    let tlat_rad = tlat_deg * DTR;
+    let tlat_rad = geo_obs.0 * DTR;
+    let trho = geo_obs.1;
 
     let mut ra = ra_rad;
     let mut dec = dec_rad;
@@ -494,18 +515,31 @@ pub fn topocentric_altaz(
     dec += 1.5472e-6 * trho * coslat_gc * lha.sin() * sindec;
 
     // Diurnal parallax (`diurpx.c`)
-    if dist_au < 1758.8 && dist_au > 0.0 {
-        let disfac = AU_KM / (0.001 * AEARTH_M);
-        let d = dist_au * disfac;
-        let x = d * dec.cos() * ra.cos() - trho * coslat_gc * last.cos();
-        let y = d * dec.cos() * ra.sin() - trho * coslat_gc * last.sin();
-        let z = d * dec.sin() - trho * sinlat_gc;
-        let top_d = (x * x + y * y + z * z).sqrt();
-        ra = zatan2(x, y);
-        dec = (z / top_d).clamp(-1.0, 1.0).asin();
+    if hp_rad > 0.0 {
+        // Quando hp_rad é fornecido (ex: Lua, Sol, planetas)
+        let sin_hp = hp_rad.sin();
+        let cos_hp = hp_rad.cos();
+        let lha_cur = last - ra;
+        let x = lha_cur.sin() * dec.cos();
+        let y = dec.sin() * cos_hp - trho * sinlat_gc * sin_hp;
+        let z = dec.cos() * cos_hp * lha_cur.cos() - trho * coslat_gc * sin_hp;
+        let d_topo = (x * x + y * y + z * z).sqrt();
+        if d_topo > 0.0 {
+            let lha_topo = zatan2(z, x);
+            ra = last - lha_topo;
+            dec = (y / d_topo).clamp(-1.0, 1.0).asin();
+        }
     }
 
     let lha = last - ra;
+    let mut lha_h = lha * 24.0 / (2.0 * std::f64::consts::PI);
+    while lha_h < 0.0 {
+        lha_h += 24.0;
+    }
+    while lha_h >= 24.0 {
+        lha_h -= 24.0;
+    }
+
     let cosdec = dec.cos();
     let sindec = dec.sin();
     let coslha = lha.cos();
@@ -518,9 +552,47 @@ pub fn topocentric_altaz(
     let d_az = sindec * coslat - cosdec * coslha * sinlat;
     let az_deg = RTD * zatan2(d_az, n);
     let alt_true_deg = RTD * (sindec * sinlat + cosdec * coslha * coslat).clamp(-1.0, 1.0).asin();
-    let refr = refrac(alt_true_deg, 1013.0, 20.0);
+    let refr = refrac(alt_true_deg, pressure_mb, temp_c);
     let alt_app_deg = alt_true_deg + refr;
 
-    (az_deg, alt_true_deg, alt_app_deg)
+    TopoAltAzResult {
+        topo_ra_rad: ra,
+        topo_dec_rad: dec,
+        true_alt_deg: alt_true_deg,
+        true_az_deg: az_deg,
+        refracted_alt_deg: alt_app_deg,
+        lha_hours: lha_h,
+    }
+}
+
+/// Helper para chamadas rápidas retornando apenas `(az_deg, alt_true_deg, alt_app_deg)`
+pub fn topocentric_altaz_simple(
+    ra_rad: f64,
+    dec_rad: f64,
+    dist_au: f64,
+    jd_ut: f64,
+    tdt: f64,
+    obs_lon_deg: f64,
+    obs_lat_deg: f64,
+) -> (f64, f64, f64) {
+    let geo_obs = geodetic_to_geocentric(obs_lat_deg, 0.0);
+    let hp_rad = if dist_au > 0.0 && dist_au < 1758.8 {
+        8.794 / (RTS * dist_au)
+    } else {
+        0.0
+    };
+    let res = topocentric_altaz(
+        ra_rad,
+        dec_rad,
+        jd_ut,
+        tdt,
+        obs_lon_deg,
+        obs_lat_deg,
+        &geo_obs,
+        hp_rad,
+        20.0,
+        1013.0,
+    );
+    (res.true_az_deg, res.true_alt_deg, res.refracted_alt_deg)
 }
 

@@ -212,13 +212,13 @@ pub fn gplan(jed: f64, plan: &PlanTblF64) -> [f64; 3] {
         let mut cu = 1.0f64;
 
         for _ in 0..m {
-            let mut j = plan.arg_tbl[p_idx] as i32;
+            let j = plan.arg_tbl[p_idx] as i32;
             p_idx += 1;
             let k1 = (plan.arg_tbl[p_idx] as usize) - 1;
             p_idx += 1;
 
             if j != 0 {
-                let mut k = j.unsigned_abs() as usize - 1;
+                let k = j.unsigned_abs() as usize - 1;
                 let mut s = ss[k1][k];
                 if j < 0 {
                     s = -s;

@@ -187,8 +187,6 @@ pub fn annuab(p: &mut [f64; 3], jed: f64) -> [f64; 3] {
 /// Relativistic deflection of light due to the Sun's gravitational field (`deflec.c`).
 /// `p`: geocentric direction vector (unit), `q`: heliocentric object vector, `e`: heliocentric Earth vector.
 pub fn relativity(p: &mut [f64; 3], q: &[f64; 3], e: &[f64; 3]) -> [f64; 3] {
-    let mut se = 0.0;
-    let mut sq = 0.0;
     let mut pq = 0.0;
     let mut ep = 0.0;
     let mut qe = 0.0;
@@ -214,7 +212,6 @@ pub fn relativity(p: &mut [f64; 3], q: &[f64; 3], e: &[f64; 3]) -> [f64; 3] {
         pq += (p[i] / po) * (q[i] / qo);
         qe += (q[i] / qo) * (e[i] / eo);
     }
-    let _ = (se, sq);
 
     if (1.0 + qe).abs() < 1.0e-5 {
         return [0.0; 3];
@@ -292,7 +289,7 @@ pub fn lightt(
     let mut p0 = [0.0f64; 3];
     let mut ptemp = [0.0f64; 3];
     let mut q = [0.0f64; 3];
-    let mut t_light = 0.0f64;
+    let t_light;
 
     // Save initial geometric position at `jed`
     let (q0, _) = kepler(jed, elem);
