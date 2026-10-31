@@ -1,0 +1,15 @@
+[package]
+name = "aa56-rust"
+version = "0.1.0"
+edition = "2021"
+description = "Motor astronômico e astrológico de alta precisão baseado 100% no aa-56 (Stephen L. Moshier - DE404)"
+
+[[bin]]
+name = "aa56-cli"
+path = "src/main.rs"
+
+[lib]
+name = "aa56_rust"
+path = "src/lib.rs"
+crate-type = ["rlib", "cdylib"]
+

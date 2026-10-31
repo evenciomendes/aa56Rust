@@ -1,0 +1,10 @@
+{
+  "name": "aa56-rust-cloudrun",
+  "version": "1.0.0",
+  "description": "Suíte Astronômica Completa aa56-rust (DE404, domoon, conjunct, moonrise) para Google Cloud Run",
+  "main": "node-test-app/server.js",
+  "scripts": {
+    "start": "node node-test-app/server.js"
+  }
+}
+

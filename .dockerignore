@@ -1,0 +1,11 @@
+.git
+.gitignore
+legado-aa56
+aa-56
+**/target
+**/node_modules
+*.log
+.vscode
+.idea
+README.md
+

@@ -1,0 +1,10 @@
+{
+  "name": "aa56-node-test-app",
+  "version": "1.0.0",
+  "description": "Ambiente de homologação e visualização web para o motor astronômico aa56-rust (DE404, domoon, conjunct, moonrise)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
+
