@@ -4,7 +4,7 @@
 use serde::Serialize;
 
 use crate::domoon::domoon;
-use crate::math_time::{deltat, jtocal_parts, jtocal_string, J2000};
+use crate::math_time::{deltat, jtocal_parts};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct MoonriseDayEntry {
@@ -71,9 +71,21 @@ pub fn compute_moonrise_table(
             day_index: i + 1,
             date_str: format!("{:04}-{:02}-{:02}", y, m, d),
             jd_ut_noon: jd_ut,
-            rise_ut: dm.rise_transit_set.rise_hms_ut.clone(),
-            transit_ut: dm.rise_transit_set.transit_hms_ut.clone(),
-            set_ut: dm.rise_transit_set.set_hms_ut.clone(),
+            rise_ut: if dm.rise_transit_set.has_rise {
+                Some(dm.rise_transit_set.rise_hms_ut.clone())
+            } else {
+                None
+            },
+            transit_ut: if dm.rise_transit_set.has_transit {
+                Some(dm.rise_transit_set.transit_hms_ut.clone())
+            } else {
+                None
+            },
+            set_ut: if dm.rise_transit_set.has_set {
+                Some(dm.rise_transit_set.set_hms_ut.clone())
+            } else {
+                None
+            },
             rise_jd: dm.rise_transit_set.jd_rise_ut,
             transit_jd: dm.rise_transit_set.jd_transit_ut,
             set_jd: dm.rise_transit_set.jd_set_ut,
