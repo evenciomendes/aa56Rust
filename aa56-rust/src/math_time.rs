@@ -1,7 +1,8 @@
 //! Constantes fundamentais e utilitários matemáticos portados 100% de `aa.c`, `kfiles.c`, `dms.c`, `zatan2.c` e `deltat.c` do `aa-56`.
 
-use std::f64::consts::PI;
+pub use std::f64::consts::PI;
 
+pub const TPI: f64 = 2.0 * PI;
 pub const DTR: f64 = 1.7453292519943295769e-2; // graus para radianos (aa.c)
 pub const RTD: f64 = 5.7295779513082320877e1;  // radianos para graus (aa.c)
 pub const RTS: f64 = 2.0626480624709635516e5;  // segundos de arco por radiano (aa.c)
@@ -209,6 +210,11 @@ pub fn jtocal_parts(j: f64) -> (i64, i32, i32, i32, i32, f64, String) {
         format!("{:04}-{:02}-{:02} {:02}:{:02}:{:04.1}", disp_year, month, day_int, h, m, s)
     };
     (year, month, day_int, h, m, s, str_date)
+}
+
+/// Converte Dia Juliano diretamente em string calendário Gregoriano/Juliano
+pub fn jtocal_string(j: f64) -> String {
+    jtocal_parts(j).6
 }
 
 /// Formata graus em `GG° MM' SS.ss″` (`dms` em `dms.c`)

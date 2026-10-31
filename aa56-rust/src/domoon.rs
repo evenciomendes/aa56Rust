@@ -11,7 +11,7 @@ use crate::earth_orientation::{
 use crate::gplan::gmoon;
 use crate::kepler::{kepler, De404Body, OrbitElement};
 use crate::math_time::{
-    deltap, format_dms, format_hms_rad, modtp, zatan2, AEARTH_M, AU_KM, DTR, PI, RTD, RTS, TPI,
+    format_dms, format_hms_rad, modtp, zatan2, AEARTH_M, AU_KM, DTR, PI, RTD, RTS, TPI,
 };
 use crate::transit::{compute_rise_transit_set, RiseSetTransit, HORIZON_MOON};
 
@@ -119,13 +119,19 @@ pub fn moonll(jed: f64, rearth_j2000: &[f64; 3]) -> ([f64; 3], [f64; 3], f64, f6
     pol[2] = r_dist;
 
     // Nutation (`nutate(J, rect)`)
-    let (_dpsi, _deps) = nutate(jed, &mut rect);
+    nutate(jed, &mut rect);
 
     // Sun ecliptic longitude of date for phase quarter calculation
     let mut sun_neg = [-rearth_j2000[0], -rearth_j2000[1], -rearth_j2000[2]];
     precess(&mut sun_neg, jed, -1);
     let (sun_lon, _, _) = lonlat(&sun_neg, jed);
-    let dlon = deltap(pol[0], sun_lon);
+    let mut dlon = pol[0] - sun_lon;
+    while dlon > PI {
+        dlon -= TPI;
+    }
+    while dlon <= -PI {
+        dlon += TPI;
+    }
 
     (rect, pol, ep, pq, dlon)
 }

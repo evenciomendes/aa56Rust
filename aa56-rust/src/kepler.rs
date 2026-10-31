@@ -299,16 +299,15 @@ pub fn kepler(jed: f64, e: &mut OrbitElement) -> ([f64; 3], [f64; 3]) {
     }
 
     // Keplerian orbit calculation (`kepler.c`) for asteroids, comets, Chiron, etc.
-    let mut alat: f64;
-    let mut E = 0.0f64;
+    let alat: f64;
+    let mut E;
     let mut M: f64;
-    let mut W: f64;
     let mut temp: f64;
 
     // Call program to compute position of Earth if this were Earth, else Keplerian
     let epoch = e.epoch;
     let mut inclination = e.i;
-    let mut ascnode = e.W * DTR;
+    let ascnode = e.W * DTR;
     let argperih = e.w;
     let meandistance = e.a;
     let mut dailymotion = e.dm;

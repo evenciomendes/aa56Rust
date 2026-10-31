@@ -52,7 +52,7 @@ pub fn compute_moonrise_table(
 
     for i in 0..days {
         let jd_ut = jd0 + (i as f64);
-        let (y, m, d, _, _, _) = jtocal_parts(jd_ut);
+        let (y, m, d, _, _, _, _) = jtocal_parts(jd_ut);
         let y_dec = (y as f64) + ((m as f64) - 1.0) / 12.0 + (d as f64) / 365.25;
         let dt_sec = deltat(y_dec);
         let jd_tdt = jd_ut + dt_sec / 86400.0;
@@ -71,12 +71,12 @@ pub fn compute_moonrise_table(
             day_index: i + 1,
             date_str: format!("{:04}-{:02}-{:02}", y, m, d),
             jd_ut_noon: jd_ut,
-            rise_ut: dm.rise_transit_set.rise_date_str.clone(),
-            transit_ut: dm.rise_transit_set.transit_date_str.clone(),
-            set_ut: dm.rise_transit_set.set_date_str.clone(),
-            rise_jd: dm.rise_transit_set.rise_jd_ut,
-            transit_jd: dm.rise_transit_set.transit_jd_ut,
-            set_jd: dm.rise_transit_set.set_jd_ut,
+            rise_ut: dm.rise_transit_set.rise_hms_ut.clone(),
+            transit_ut: dm.rise_transit_set.transit_hms_ut.clone(),
+            set_ut: dm.rise_transit_set.set_hms_ut.clone(),
+            rise_jd: dm.rise_transit_set.jd_rise_ut,
+            transit_jd: dm.rise_transit_set.jd_transit_ut,
+            set_jd: dm.rise_transit_set.jd_set_ut,
             illuminated_pct: dm.illuminated_fraction * 100.0,
             phase_description: dm.phase_description,
             app_ra_hms: dm.app_ra_hms,

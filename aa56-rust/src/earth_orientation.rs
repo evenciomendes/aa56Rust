@@ -2,7 +2,7 @@
 //! Obliquidade da Eclíptica (`epsiln.c` WILLIAMS/DE403), Tempo Sideral Aparente (`sidrlt.c` DE403),
 //! Refração (`refrac.c`) e Redução Topocêntrica (`altaz.c`, `diurab.c`, `diurpx.c`, `kfiles.c`).
 
-use crate::math_time::{mod3600, zatan2, AEARTH_M, AU_KM, DTR, FLAT_INV, J2000, RTD, STR};
+use crate::math_time::{mod3600, zatan2, AEARTH_M, AU_KM, DTR, FLAT_INV, J2000, RTD, RTS, STR};
 
 /// Obliquidade média da eclíptica na data Juliana `jd` (`epsiln.c` - fórmula WILLIAMS = 1 / DE403).
 /// Retorna `(eps, cos_eps, sin_eps)` em radianos.

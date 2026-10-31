@@ -4,9 +4,9 @@
 use serde::Serialize;
 
 use crate::domoon::moonll;
-use crate::earth_orientation::{epsiln, lonlat, nutate, precess};
+use crate::earth_orientation::lonlat;
 use crate::kepler::{kepler, De404Body, OrbitElement};
-use crate::math_time::{deltap, deltat, jtocal_string, zatan2, J2000, PI, RTD, STR, TPI};
+use crate::math_time::{deltat, jtocal_string, modtp, J2000, PI, RTD, STR, TPI};
 use crate::reductions::annuab;
 
 #[derive(Debug, Clone, Serialize)]
@@ -73,6 +73,17 @@ pub fn apparent_sun_moon_lon(jd_tdt: f64) -> (f64, f64) {
     (s_lon, m)
 }
 
+/// Normalize angle difference to [-PI, PI]
+fn norm_angle_diff(mut diff: f64) -> f64 {
+    while diff > PI {
+        diff -= TPI;
+    }
+    while diff <= -PI {
+        diff += TPI;
+    }
+    diff
+}
+
 /// Search for date when `func(t) == y` using `search(t, y, delta)` from `conjunct.c`.
 pub fn search_conjunct<F>(t_guess: f64, y_target: f64, delta: f64, func: F) -> f64
 where
@@ -82,9 +93,9 @@ where
     let mut tm = t_guess;
     let mut tr = t_guess + 0.5 * delta;
 
-    let mut yl = deltap(func(tl), y_target);
-    let mut ym = deltap(func(tm), y_target);
-    let mut yr = deltap(func(tr), y_target);
+    let mut yl = norm_angle_diff(func(tl) - y_target);
+    let mut ym = norm_angle_diff(func(tm) - y_target);
+    let mut yr = norm_angle_diff(func(tr) - y_target);
 
     for _ in 0..16 {
         let a = 0.5 * (yl + yr) - ym;
@@ -105,7 +116,7 @@ where
         };
 
         let tn = tm + 0.5 * e * (tr - tl);
-        let yn = deltap(func(tn), y_target);
+        let yn = norm_angle_diff(func(tn) - y_target);
         if yn.abs() < STR * 0.01 || (tr - tl).abs() < 1.0e-8 {
             return tn;
         }
@@ -131,7 +142,7 @@ pub fn compute_conjunct_report(jd_start: f64, num_synodic_cycles: usize) -> Conj
 
     // Find current elongation `s - m` at `jd_start`
     let (s0, m0) = apparent_sun_moon_lon(jd_start);
-    let diff0 = deltap(m0, s0); // `m - s` in `[-PI, PI]`
+    let diff0 = norm_angle_diff(m0 - s0); // `m - s` in `[-PI, PI]`
     let mut approx_new_moon = jd_start - (diff0 / TPI) * synodic_month;
 
     // Step back 1 cycle if ahead of `jd_start` so we cover starting from just before `jd_start`
